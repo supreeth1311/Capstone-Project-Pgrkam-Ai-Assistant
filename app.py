@@ -1,35 +1,25 @@
 import streamlit as st
-from googletrans import Translator
-from google.cloud import speech
-import os
-from dotenv import load_dotenv
+from deep_translator import GoogleTranslator
 import requests
-import tempfile
+import os
 
 # -------------------------
-# Load environment variables
+# Load Gemini API key from Streamlit Secrets
 # -------------------------
-load_dotenv()
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-
-# -------------------------
-# Initialize translator
-# -------------------------
-translator = Translator()
+GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
 
 # -------------------------
 # Streamlit UI
 # -------------------------
 st.set_page_config(page_title="PGRKAM AI Assistant", layout="centered")
 st.title("📘 PGRKAM AI Assistant")
-st.write("A smart chatbot for job seekers. Supports text & voice queries!")
+st.write("Ask your questions and get answers powered by Gemini API!")
 
 # Language selection
 language = st.selectbox("Choose language:", ["English", "Hindi", "Punjabi"])
 
-# Tabs for Text / Voice input
-tab1, tab2 = st.tabs(["Text Query", "Voice Query"])
+# User input
+user_input = st.text_input("Type your question:")
 
 # -------------------------
 # Gemini API query function
@@ -56,60 +46,24 @@ def query_gemini(prompt_text):
         return f"Error: {response.status_code} - {response.text}"
 
 # -------------------------
-# Speech-to-Text function
+# Process the query
 # -------------------------
-def speech_to_text(audio_file):
-    client = speech.SpeechClient()
-    audio_content = audio_file.read()
+if user_input:
+    st.write("🔍 Processing your query...")
 
-    audio = speech.RecognitionAudio(content=audio_content)
-    config = speech.RecognitionConfig(
-        encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
-        language_code="en-US"
-    )
+    # Translate input to English for API
+    translated_input = GoogleTranslator(source='auto', target='en').translate(user_input)
 
-    response = client.recognize(config=config, audio=audio)
-    if response.results:
-        return response.results[0].alternatives[0].transcript
-    else:
-        return ""
+    # Query Gemini API
+    gemini_response = query_gemini(translated_input)
 
-# -------------------------
-# Text Query Tab
-# -------------------------
-with tab1:
-    user_input = st.text_input("Type your question:")
-    if user_input:
-        st.write("🔍 Processing your text query...")
-        # Translate to English
-        translated_input = translator.translate(user_input, dest='en').text
-        # Get response from Gemini API
-        gemini_response = query_gemini(translated_input)
-        # Translate back to selected language
-        lang_codes = {"English": "en", "Hindi": "hi", "Punjabi": "pa-IN"}
-        translated_response = translator.translate(gemini_response, dest=lang_codes[language]).text
-        st.success(translated_response)
+    # Translate back to selected language
+    lang_map = {"English": "en", "Hindi": "hi", "Punjabi": "pa"}
+    translated_response = GoogleTranslator(source='en', target=lang_map[language]).translate(gemini_response)
 
-# -------------------------
-# Voice Query Tab
-# -------------------------
-with tab2:
-    audio_file = st.file_uploader("Upload your voice query (WAV/FLAC format):", type=["wav", "flac"])
-    if audio_file:
-        st.write("🎙 Processing your voice query...")
-        # Convert speech to text
-        user_input = speech_to_text(audio_file)
-        st.write(f"➡ Recognized Text: {user_input}")
-        if user_input:
-            # Translate to English for Gemini
-            translated_input = translator.translate(user_input, dest='en').text
-            # Query Gemini API
-            gemini_response = query_gemini(translated_input)
-            # Translate back to selected language
-            lang_codes = {"English": "en", "Hindi": "hi", "Punjabi": "pa-IN"}
-            translated_response = translator.translate(gemini_response, dest=lang_codes[language]).text
-            st.success(translated_response)
+    # Show response
+    st.success(translated_response)
 
 # Footer
 st.markdown("---")
-st.caption("This chatbot is integrated with Gemini API and Speech-to-Text API for text & voice queries.")
+st.caption("This chatbot is currently using Gemini API for text queries only.")

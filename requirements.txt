@@ -1,0 +1,7 @@
+streamlit
+googletrans==4.0.0-rc1
+python-dotenv
+google-cloud-speech
+google-cloud-aiplatform
+requests
+pydub

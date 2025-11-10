@@ -1,0 +1,7 @@
+2025/11/06-01:56:15.229 1858 Reusing MANIFEST C:\Users\sup\Desktop\pgrkam-copilot\pgrkam_user\Default\IndexedDB\https_www.youtube.com_0.indexeddb.leveldb/MANIFEST-000001
+2025/11/06-01:56:15.230 1858 Recovering log #3
+2025/11/06-01:56:15.230 1858 Reusing old log C:\Users\sup\Desktop\pgrkam-copilot\pgrkam_user\Default\IndexedDB\https_www.youtube.com_0.indexeddb.leveldb/000003.log 
+2025/11/06-01:56:15.977 47b4 Level-0 table #5: started
+2025/11/06-01:56:16.241 47b4 Level-0 table #5: 14857 bytes OK
+2025/11/06-01:56:16.346 47b4 Delete type=0 #3
+2025/11/06-01:56:16.346 4a0 Manual compaction at level-0 from '\x00\x02\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x03\x00\x00\x00' @ 0 : 0; will stop at (end)

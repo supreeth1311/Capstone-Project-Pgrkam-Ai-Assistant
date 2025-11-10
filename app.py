@@ -423,7 +423,7 @@ if "auth_user" not in st.session_state:
     render_auth()
 else:
     render_app()
-=======
+
 import streamlit as st
 from deep_translator import GoogleTranslator
 import requests

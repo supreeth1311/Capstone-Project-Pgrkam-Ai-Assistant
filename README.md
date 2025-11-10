@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # PGRKAM Copilot (Streamlit + Groq)
 
 Multilingual (Punjabi/Hindi/English) assistant for PGRKAM: chat, RAG over uploaded PDFs, smart intent routing, and basic job recommendations.
@@ -15,3 +16,21 @@ Multilingual (Punjabi/Hindi/English) assistant for PGRKAM: chat, RAG over upload
 pip install -r requirements.txt
 export GROQ_API_KEY=YOUR_KEY
 streamlit run app.py
+=======
+PGRKAM Smart Assistant
+
+🚀 AI-powered smart assistant for the Punjab Ghar Ghar Rozgar and Karobar Mission (PGRKAM) digital employment platform.
+This project enhances user experience by providing an intelligent guide to navigate multiple modules (jobs, self-employment, counseling, career guidance, etc.) through smart automation and conversational AI.
+
+✨ Key Features
+
+🤖 AI Chatbot for query resolution
+
+🔍 Smart Navigation across PGRKAM modules
+
+🌐 Multilingual Support (English, Punjabi, Hindi)
+
+📱 Seamless Web & Mobile Integration
+
+⚡ Automation-Driven User Experience
+>>>>>>> a9e0c63ff99083644ae57603a6169c8caa78a010

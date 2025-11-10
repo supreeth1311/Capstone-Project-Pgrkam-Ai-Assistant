@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # app.py
 import os
 import json
@@ -494,4 +493,4 @@ if user_input:
 # Footer
 st.markdown("---")
 st.caption("This chatbot is currently using Gemini API for text queries only.")
->>>>>>> a9e0c63ff99083644ae57603a6169c8caa78a010
+

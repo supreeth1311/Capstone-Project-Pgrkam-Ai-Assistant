@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 # PGRKAM Copilot (Streamlit + Groq)
 
 Multilingual (Punjabi/Hindi/English) assistant for PGRKAM: chat, RAG over uploaded PDFs, smart intent routing, and basic job recommendations.
@@ -33,4 +33,4 @@ This project enhances user experience by providing an intelligent guide to navig
 📱 Seamless Web & Mobile Integration
 
 ⚡ Automation-Driven User Experience
->>>>>>> a9e0c63ff99083644ae57603a6169c8caa78a010
+

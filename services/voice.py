@@ -1,24 +1,10 @@
 # services/voice.py
 import io
 import os
+import tempfile
 from typing import Optional
 
 from gtts import gTTS
-from groq import Groq
-
-# -----------------------
-# Groq client (uses GROQ_API_KEY from env / Streamlit secrets)
-# -----------------------
-_groq_client: Optional[Groq] = None
-
-
-def _get_groq_client() -> Groq:
-    global _groq_client
-    if _groq_client is None:
-        # If GROQ_API_KEY is not explicitly passed, Groq() will read from env
-        _groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
-    return _groq_client
-
 
 # -----------------------
 # Text-to-Speech (gTTS)
@@ -28,11 +14,7 @@ def tts_gtts(text: str, lang_hint: str = "en") -> bytes:
     Return an MP3 byte stream for the given text.
     lang_hint: 'en' | 'hi' | 'pa'
     """
-    lang_map = {
-        "en": "en",
-        "hi": "hi",
-        "pa": "pa",  # Punjabi
-    }
+    lang_map = {"en": "en", "hi": "hi", "pa": "pa"}
     lang = lang_map.get((lang_hint or "en").lower(), "en")
 
     mp3_buf = io.BytesIO()
@@ -40,47 +22,67 @@ def tts_gtts(text: str, lang_hint: str = "en") -> bytes:
     tts.write_to_fp(mp3_buf)
     return mp3_buf.getvalue()
 
-
 # -----------------------
-# Speech-to-Text (ASR) using Groq Whisper
+# Speech-to-Text (Groq Whisper)
 # -----------------------
-def transcribe_audio_bytes(audio_bytes: bytes, lang_hint: str = "en") -> Optional[str]:
+def _whisper_lang(lang_hint: str) -> Optional[str]:
     """
-    Transcribe raw audio bytes to text using Groq Whisper.
+    Map 'en'|'hi'|'pa'|'auto' -> Whisper language codes (None for auto).
+    """
+    if not lang_hint:
+        return None
+    h = lang_hint.lower()
+    if h in {"auto", "detect"}:
+        return None
+    if h in {"en", "hi", "pa"}:
+        return h
+    # default to auto if unknown
+    return None
 
-    - Expects 'audio_bytes' from streamlit_mic_recorder.
-    - Returns transcribed text or None on failure.
-
-    NOTE:
-    - Requires `pip install groq`.
-    - Uses model "whisper-large-v3" (or "whisper-large-v3-turbo").
+def transcribe_audio_bytes(audio_bytes: bytes, lang_hint: str = "auto") -> Optional[str]:
+    """
+    Transcribe raw audio bytes using Groq Whisper API.
+    Requires:
+      pip install groq
+      env var GROQ_API_KEY set
+    Returns stripped text or None on failure.
     """
     if not audio_bytes:
         return None
 
+    api_key = os.environ.get("GROQ_API_KEY", "").strip()
+    if not api_key:
+        # No key → gracefully return None (UI just won't prefill)
+        return None
+
     try:
-        client = _get_groq_client()
+        from groq import Groq
+        client = Groq(api_key=api_key)
 
-        # Give Groq a fake filename + the raw bytes from mic_recorder
-        file_tuple = ("audio.wav", audio_bytes)
+        # Write bytes to a temporary WAV file for upload
+        # (streamlit-mic-recorder usually yields WAV bytes)
+        with tempfile.NamedTemporaryFile(suffix=".wav", delete=True) as tmp:
+            tmp.write(audio_bytes)
+            tmp.flush()
 
-        # You can omit 'language' to let Whisper auto-detect.
-        # If you want to force language hint, map lang_hint to ["en", "hi", "pa"].
-        transcription = client.audio.transcriptions.create(
-            file=file_tuple,
-            model="whisper-large-v3",  # or "whisper-large-v3-turbo" if you prefer
-            response_format="json",
-            # language="en",  # optional – uncomment to force English
-        )
+            language = _whisper_lang(lang_hint)  # None => auto-detect
+            # Groq Whisper models: "whisper-large-v3" (multilingual), "distil-whisper-large-v3-en" (English)
+            model_name = "whisper-large-v3" if language is None or language != "en" else "distil-whisper-large-v3-en"
 
-        # Groq's Python client returns an object with .text field
-        text = getattr(transcription, "text", None)
-        if not text:
-            return None
-        return text.strip()
+            with open(tmp.name, "rb") as f:
+                resp = client.audio.transcriptions.create(
+                    file=f,
+                    model=model_name,
+                    # language can be omitted for auto; pass only if specified
+                    **({"language": language} if language else {}),
+                    # You can request plain text
+                    response_format="text"
+                )
 
-    except Exception as e:
-        # For debugging you can temporarily print(e) or log it
-        # but in deployed app it's safer to just fail silently
-        # and let the UI behave as "no speech detected".
+        # `resp` is a string when response_format="text"
+        text = (resp or "").strip()
+        return text or None
+
+    except Exception:
+        # Any error (network/format/rate limits) → fail silently; UI remains ok
         return None
